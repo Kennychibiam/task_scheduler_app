@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:to_do_list_app/main.dart';
 import 'package:to_do_list_app/test.dart';
 
-import 'Screens/text_notes.dart';
+import 'Screens/text_notes_screen.dart';
 
 class RouteGenerator {
   static const String HOME_SCREEN = "MyApp";
