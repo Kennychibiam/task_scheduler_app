@@ -32,7 +32,7 @@ class DatabaseClass {
               " TITLE TEXT NOT NULL, "
               "BODY TEXT NOT NULL, "
               "DATE_CREATED TEXT NOT NULL, "
-              "IS_COMPLETED INTEGER NOT NULL,"
+              "IS_COMPLETED INTEGER NOT NULL"
               ")",
         );
         await database.execute("CREATE TABLE NOTIFICATION_TABLE(ID INTEGER PRIMARY KEY AUTOINCREMENT, TITLE TEXT NOT NULL, DATE TEXT NOT NULL, TIME TEXT NOT NULL )");
@@ -41,7 +41,7 @@ class DatabaseClass {
     );
   }
 
-  Future<int?> insertIntoTable(
+  Future<int?> insertIntoToDoTable(
       {required String tableName, required DatabaseModel modelDatabase}) async {
     int? result;
 
@@ -57,6 +57,23 @@ class DatabaseClass {
     } else {
       result =
       await database?.insert(tableName, modelDatabase.convertDataToMap());
+    }
+    return result;
+  }
+
+  Future<int?> updateToDoTableTitle(
+      {required String tableName, required String oldTableTitle, required String newTableTitle, required DatabaseModel modelDatabase}) async {
+    int? result;
+
+    database =
+    await instance.openGetDatabase; //returns instance of itself if not null
+
+    List<Map<String, Object?>>? resultCheck = await database
+        ?.query(tableName, where: "Title=?", whereArgs: [oldTableTitle]);
+
+    if (resultCheck?.isNotEmpty ?? false) {
+      result = await database?.update(tableName, modelDatabase.convertDataToMap(),
+          where: "Title=?", whereArgs: [oldTableTitle]);
     }
     return result;
   }
@@ -110,7 +127,7 @@ class DatabaseClass {
         ?.query(tableName, where: "Title=?", whereArgs: [modelDatabase.title]);
 
     if (resultCheck?.isNotEmpty ?? false) {
-      result = await updateToDoTable(
+      result = await updateNotificationTable(
           tableName: tableName, modelDatabase: modelDatabase);
     } else {
       result =
@@ -129,6 +146,13 @@ class DatabaseClass {
     return result;
   }
 
+  Future<int> retrieveIdFromNotificationTable(String title) async {
+    database =
+    await instance.openGetDatabase; //returns instance of itself if not null
 
+    List<Map<String, dynamic>>? result = await database?.query(NOTIFICATION_TABLE,where: "TITLE=?",whereArgs: [title]);
+    int id=result?.first["ID"];
+    return id;
+  }
 
 }

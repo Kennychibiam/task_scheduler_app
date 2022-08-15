@@ -6,6 +6,8 @@ import '../route_generator.dart';
 import "package:flutter_slidable/flutter_slidable.dart";
 import 'package:to_do_list_app/widgets/show_dialog_widget.dart';
 
+import '../search_class/search_bar_delegate.dart';
+
 class ToDoScreen extends StatefulWidget {
   const ToDoScreen({Key? key}) : super(key: key);
 
@@ -28,7 +30,14 @@ class _ToDoScreenState extends State<ToDoScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("NOTES")),
+      appBar: AppBar(title: const Text("NOTES"), actions: [
+        IconButton(
+          onPressed: () {
+            showSearch(context: context, delegate: TodoListSearchDelegate(updateToDoListsViaSearch));
+          },
+          icon: Icon(Icons.search),
+        )
+      ]),
       body: buildViews(),
       floatingActionButton: FloatingActionButton(
           onPressed: () {
@@ -45,7 +54,9 @@ class _ToDoScreenState extends State<ToDoScreen> {
           return buildLists(snapshots.data!);
         } else {
           return const Center(
-            child: Text("YOUR TO DO IS EMPTY",),
+            child: Text(
+              "YOUR TO DO IS EMPTY",
+            ),
           );
         }
       });
@@ -122,24 +133,30 @@ class _ToDoScreenState extends State<ToDoScreen> {
                             Align(
                                 alignment: Alignment.bottomRight,
                                 child: Checkbox(
-                                    value: dataModel[index].isCompleted==0?false:true,
+                                    value: dataModel[index].isCompleted == 0
+                                        ? false
+                                        : true,
                                     onChanged: (boolValue) async {
                                       bool currentBoolValue =
-                                      dataModel[index].isCompleted==0?false:true;
+                                          dataModel[index].isCompleted == 0
+                                              ? false
+                                              : true;
                                       if (boolValue == true) {
                                         dynamic option = await showDialogWidget(
                                             context,
                                             "Task Completion",
                                             "Do you want to mark this task as completed.");
-                                        if (option!=null && option[0] != null && option[0] == true) {
-
+                                        if (option != null &&
+                                            option[0] != null &&
+                                            option[0] == true) {
                                           updateTaskCompletion(
                                               dataModel[index].title, 1);
                                         } else {
-
                                           setState(() {
                                             dataModel[index].isCompleted =
-                                                currentBoolValue==true?1:0;
+                                                currentBoolValue == true
+                                                    ? 1
+                                                    : 0;
                                           });
                                         }
                                       } else {
@@ -148,13 +165,17 @@ class _ToDoScreenState extends State<ToDoScreen> {
                                             "Task Completion",
                                             "Are you sure you want to undo this task completion");
 
-                                        if (option!=null && option[0] != null && option[0] == true) {
+                                        if (option != null &&
+                                            option[0] != null &&
+                                            option[0] == true) {
                                           updateTaskCompletion(
                                               dataModel[index].title, 0);
                                         } else {
                                           setState(() {
                                             dataModel[index].isCompleted =
-                                                currentBoolValue==true?1:0;
+                                                currentBoolValue == true
+                                                    ? 1
+                                                    : 0;
                                           });
                                         }
                                       }
@@ -190,4 +211,8 @@ class _ToDoScreenState extends State<ToDoScreen> {
           .retrieveTable(tableName: DatabaseClass.TO_DO_LIST_TABLE);
     });
   }
+  void updateToDoListsViaSearch(Future<List<DatabaseModel>> searchToDoListItems){
+      futureToDoListItems = searchToDoListItems;
+  }
+
 }

@@ -5,7 +5,7 @@ dynamic date;
 dynamic time;
 
 Future<dynamic> showDialogWidget(
-        BuildContext context, String title, Function updateSelectedDate,Function updateSelectedTime,{String ?currentNotificationDate, String ?currentNotificationTime}) {
+        BuildContext context, String title, Function updateSelectedDate,Function updateSelectedTime,Function setNotification ,{String ?currentNotificationDate, String ?currentNotificationTime}) {
 
 
 
@@ -63,6 +63,8 @@ Future<dynamic> showDialogWidget(
                 Navigator.pop(context);
               }),
               TextButton(child: Text("OK"), onPressed: () {
+                setNotification();
+
                 Navigator.pop(context, [date.toString(), time.toString()]);
               },),
             ],

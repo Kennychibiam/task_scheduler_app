@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:to_do_list_app/ajebutter.dart';
 import 'package:to_do_list_app/models/database.dart';
 import 'package:to_do_list_app/database_model.dart';
 import 'package:to_do_list_app/Screens/to_do_screen.dart';
 import 'package:to_do_list_app/models/shared_preferences.dart';
+import 'package:to_do_list_app/notifications/notification.dart';
 import 'package:to_do_list_app/route_generator.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'Screens/onboarding_screen.dart';
@@ -13,6 +13,7 @@ import 'package:to_do_list_app/theme/layout_theme.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await NotificationServiceClass().initNotifications();
   var sharedPreferenceInstance = await SharedPreferenceClass
       .sharedPreferenceClassInstance.getSharedPreferenceClassInstance;
   SharedPreferenceClass.sharedPreferenceClassInstance.canShowOnBoredScreen =

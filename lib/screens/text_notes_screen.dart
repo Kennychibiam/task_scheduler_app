@@ -1,8 +1,13 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:timezone/timezone.dart';
 import 'package:to_do_list_app/models/database.dart';
 import 'package:to_do_list_app/database_model.dart';
+import 'package:to_do_list_app/notifications/toast.dart';
 import 'package:to_do_list_app/widgets/show_dialog_date_time_widget.dart';
+
+import '../notifications/notification.dart';
+import 'package:timezone/data/latest_10y.dart' as tz;
 
 class TextNotesScreen extends StatefulWidget {
   String? title;
@@ -62,28 +67,46 @@ class _TextNotesScreenState extends State<TextNotesScreen> {
 
     return WillPopScope(
       onWillPop: () async {
-        if (titleTextEditingController.text.isNotEmpty) {
-          if (originalTitle != null) {
-            DatabaseModel databaseModel = DatabaseModel(
-                dateCreated: widget.dateCreated,
-                isCompleted: widget.isCompleted ?? 0,
-                title: originalTitle,
-                body: bodyTextEditingController.text);
-            await DatabaseClass.instance.insertIntoTable(
-                tableName: DatabaseClass.TO_DO_LIST_TABLE,
-                modelDatabase: databaseModel);
-          } else {
-            DatabaseModel databaseModel = DatabaseModel(
-                dateCreated: widget.dateCreated,
-                isCompleted: widget.isCompleted ?? 0,
-                title:
-                    "${titleTextEditingController.text}///${widget.dateCreated}",
-                body: bodyTextEditingController.text);
-            await DatabaseClass.instance.insertIntoTable(
-                tableName: DatabaseClass.TO_DO_LIST_TABLE,
-                modelDatabase: databaseModel);
-          }
-        }
+        // if (titleTextEditingController.text.isNotEmpty) {
+        //   if (originalTitle != null) {
+        //     if (originalTitle !=
+        //         "${titleTextEditingController.text}///${widget.dateCreated}") {
+        //       DatabaseModel databaseModel = DatabaseModel(
+        //           dateCreated: widget.dateCreated,
+        //           isCompleted: widget.isCompleted ?? 0,
+        //           title:
+        //               "${titleTextEditingController.text}///${widget.dateCreated}",
+        //           body: bodyTextEditingController.text);
+        //       await DatabaseClass.instance.updateToDoTableTitle(
+        //           tableName: DatabaseClass.TO_DO_LIST_TABLE,
+        //           oldTableTitle: originalTitle ?? "",
+        //           newTableTitle:
+        //               "${titleTextEditingController.text}///${widget.dateCreated}",
+        //           modelDatabase: databaseModel);
+        //     } else {
+        //       DatabaseModel databaseModel = DatabaseModel(
+        //           dateCreated: widget.dateCreated,
+        //           isCompleted: widget.isCompleted ?? 0,
+        //           title: originalTitle,
+        //           body: bodyTextEditingController.text);
+        //       await DatabaseClass.instance.insertIntoToDoTable(
+        //           tableName: DatabaseClass.TO_DO_LIST_TABLE,
+        //           modelDatabase: databaseModel);
+        //     }
+        //   } else {
+        //     //first time user saves the note
+        //     DatabaseModel databaseModel = DatabaseModel(
+        //         dateCreated: widget.dateCreated,
+        //         isCompleted: widget.isCompleted ?? 0,
+        //         title:
+        //             "${titleTextEditingController.text}///${widget.dateCreated}",
+        //         body: bodyTextEditingController.text);
+        //     await DatabaseClass.instance.insertIntoToDoTable(
+        //         tableName: DatabaseClass.TO_DO_LIST_TABLE,
+        //         modelDatabase: databaseModel);
+        //   }
+        // }
+        await saveData();
         return true;
       },
       child: Scaffold(
@@ -92,19 +115,28 @@ class _TextNotesScreenState extends State<TextNotesScreen> {
           actions: [
             IconButton(
                 onPressed: () async {
+                  if (titleTextEditingController.text.toString().isNotEmpty &&
+                      bodyTextEditingController.text.toString().isNotEmpty !=
+                          null) {
+                    await saveData();
+                    customToastWidget("SAVED!");
+                  } else {
+                    customToastWidget("Fill in title and text");
+                  }
+                },
+                icon: Icon(Icons.add)),
+            IconButton(
+                onPressed: () async {
+                  tz.initializeTimeZones();
+
                   dynamic selectedDateTime = await showDialogWidget(
                       context,
                       "Set Notifications",
                       updateSelectedDate,
                       updateSelectedTime,
+                      setNotification,
                       currentNotificationDate: widget.currentNotificationDate,
                       currentNotificationTime: widget.currentNotificationTime);
-                  if (selectedDateTime != null &&
-                      widget.currentNotificationDate != null &&
-                      widget.currentNotificationTime != null) {
-
-
-                  }
                 },
                 icon: Icon(Icons.alarm_on_rounded)),
           ],
@@ -129,6 +161,9 @@ class _TextNotesScreenState extends State<TextNotesScreen> {
                 child: TextField(
                   keyboardType: TextInputType.multiline,
                   maxLines: null,
+                  onChanged: (text) {
+                    saveData();
+                  },
                   controller: bodyTextEditingController,
                   decoration: InputDecoration(
                     border: InputBorder.none,
@@ -202,17 +237,75 @@ class _TextNotesScreenState extends State<TextNotesScreen> {
   updateSelectedDate(String date) {
     widget.currentNotificationDate = date;
 
-    showDialogWidget(
-        context, "Set Notifications", updateSelectedDate, updateSelectedTime,
+    showDialogWidget(context, "Set Notifications", updateSelectedDate,
+        updateSelectedTime, setNotification,
         currentNotificationDate: widget.currentNotificationDate,
         currentNotificationTime: widget.currentNotificationTime);
   }
 
   updateSelectedTime(String time) {
     widget.currentNotificationTime = time;
-    showDialogWidget(
-        context, "Set Notifications", updateSelectedDate, updateSelectedTime,
+    showDialogWidget(context, "Set Notifications", updateSelectedDate,
+        updateSelectedTime, setNotification,
         currentNotificationDate: widget.currentNotificationDate,
         currentNotificationTime: widget.currentNotificationTime);
+  }
+
+  saveData() async {
+    if (titleTextEditingController.text.isNotEmpty) {
+      if (originalTitle != null) {
+        if (originalTitle !=
+            "${titleTextEditingController.text}///${widget.dateCreated}") {
+          DatabaseModel databaseModel = DatabaseModel(
+              dateCreated: widget.dateCreated,
+              isCompleted: widget.isCompleted ?? 0,
+              title:
+                  "${titleTextEditingController.text}///${widget.dateCreated}",
+              body: bodyTextEditingController.text);
+          await DatabaseClass.instance.updateToDoTableTitle(
+              tableName: DatabaseClass.TO_DO_LIST_TABLE,
+              oldTableTitle: originalTitle ?? "",
+              newTableTitle:
+                  "${titleTextEditingController.text}///${widget.dateCreated}",
+              modelDatabase: databaseModel);
+          originalTitle="${titleTextEditingController.text}///${widget.dateCreated}";
+        } else {
+          DatabaseModel databaseModel = DatabaseModel(
+              dateCreated: widget.dateCreated,
+              isCompleted: widget.isCompleted ?? 0,
+              title: originalTitle,
+              body: bodyTextEditingController.text);
+          await DatabaseClass.instance.insertIntoToDoTable(
+              tableName: DatabaseClass.TO_DO_LIST_TABLE,
+              modelDatabase: databaseModel);
+        }
+      } else {
+        //first time user saves the note
+        DatabaseModel databaseModel = DatabaseModel(
+            dateCreated: widget.dateCreated,
+            isCompleted: widget.isCompleted ?? 0,
+            title: "${titleTextEditingController.text}///${widget.dateCreated}",
+            body: bodyTextEditingController.text);
+        await DatabaseClass.instance.insertIntoToDoTable(
+            tableName: DatabaseClass.TO_DO_LIST_TABLE,
+            modelDatabase: databaseModel);
+      }
+    }
+  }
+
+  void setNotification() async {
+    if (widget.currentNotificationDate != null &&
+        widget.currentNotificationTime != null) {
+      if (titleTextEditingController.text.toString().isNotEmpty &&
+          bodyTextEditingController.text.toString().isNotEmpty) {
+        await NotificationServiceClass().showNotifications(
+            1, "TODO APP ALERT", titleTextEditingController.text,
+            date: widget.currentNotificationDate,
+            time: widget.currentNotificationTime);
+        customToastWidget("Notifications Set");
+      } else {
+        customToastWidget("Fill in title and text");
+      }
+    }
   }
 }
